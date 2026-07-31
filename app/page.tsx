@@ -5,12 +5,13 @@ import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  SparklesIcon, 
-  TrendingUpIcon, 
-  CpuIcon, 
-  ArrowRightIcon, 
-  CheckCircle2Icon, 
+import { HeroBackground } from "@/components/landing/HeroBackground"
+import {
+  SparklesIcon,
+  TrendingUpIcon,
+  CpuIcon,
+  ArrowRightIcon,
+  CheckCircle2Icon,
   ZapIcon,
   ShieldCheckIcon,
   PlusIcon,
@@ -24,7 +25,7 @@ import {
 function FacebookIcon(props: React.ComponentProps<"svg">) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   )
 }
@@ -59,20 +60,20 @@ const staggerContainer = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const } 
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const }
   },
 }
 
 const fadeScale = {
   hidden: { opacity: 0, scale: 0.94, y: 20 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
-    y: 0, 
-    transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] as const } 
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] as const }
   },
 }
 
@@ -93,15 +94,15 @@ export default function Home() {
   const handleSimulateConversion = () => {
     const values = ["+$180.00", "+$450.00", "+$99.00", "+$299.00", "+$59.00"]
     const randomVal = values[Math.floor(Math.random() * values.length)]
-    
+
     const newItem: CRMFeedItem = {
       id: Math.random().toString(),
       event: Math.random() > 0.5 ? "Purchase API Tracked" : "Lead Generated",
       source: Math.random() > 0.4 ? "Meta CAPI" : "Meta Pixel",
       value: randomVal,
       timestamp: "Just now",
-      color: randomVal.includes("+") 
-        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+      color: randomVal.includes("+")
+        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
         : "bg-purple-500/10 text-purple-400 border-purple-500/20"
     }
 
@@ -116,60 +117,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#030303] text-zinc-50 font-sans selection:bg-purple-600 selection:text-white relative overflow-hidden">
-      
+
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* BACKGROUND LAYER                                                  */}
-      {/* Multi-layer: blur circles + dot grid + gradient glow              */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        
-        {/* Primary purple glow — top-left */}
-        <motion.div
-          className="absolute -top-[20%] -left-[15%] size-[700px] rounded-full bg-purple-600/20 blur-[160px]"
-          animate={{
-            x: [0, 60, -40, 0],
-            y: [0, -70, 50, 0],
-            scale: [1, 1.15, 0.9, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* Secondary indigo glow — right side */}
-        <motion.div
-          className="absolute top-[15%] -right-[15%] size-[800px] rounded-full bg-indigo-600/15 blur-[180px]"
-          animate={{
-            x: [0, -70, 50, 0],
-            y: [0, 90, -60, 0],
-            scale: [1, 0.88, 1.12, 1],
-          }}
-          transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* Tertiary pink accent glow — center-bottom, adds warmth */}
-        <motion.div
-          className="absolute top-[60%] left-[30%] size-[500px] rounded-full bg-pink-600/8 blur-[140px]"
-          animate={{
-            x: [0, 40, -30, 0],
-            y: [0, -40, 30, 0],
-            scale: [1, 1.1, 0.95, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        {/* Dot grid pattern — fades out radially from top center */}
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)",
-            backgroundSize: "32px 32px",
-            maskImage: "radial-gradient(ellipse 70% 50% at 50% 0%, black 40%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 50% at 50% 0%, black 40%, transparent 100%)",
-          }}
-        />
-
-        {/* Subtle line grid overlay on top of dots */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-      </div>
+      <HeroBackground />
 
       {/* ═══════════════════════════════════════════════════════════════════ */}
       {/* NAVBAR                                                            */}
@@ -181,11 +133,11 @@ export default function Home() {
       {/* Two-column: Left = Copy + CTAs, Right = Dashboard Preview         */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 lg:pt-24 pb-16 lg:pb-28 relative z-10 flex flex-col gap-28">
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-          
+
           {/* ─── LEFT COLUMN: Copy & Actions ─── */}
-          <motion.div 
+          <motion.div
             className="lg:col-span-6 flex flex-col items-start text-left"
             variants={staggerContainer}
             initial="hidden"
@@ -200,14 +152,14 @@ export default function Home() {
             </motion.div>
 
             {/* Headline with animated gradient shimmer */}
-            <motion.h1 
+            <motion.h1
               variants={fadeUp}
               className="text-4xl font-extrabold sm:text-5xl lg:text-[3.5rem] xl:text-6xl tracking-tight leading-[1.06] font-heading mb-6"
             >
               <span className="bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-100 to-zinc-400">
                 Turn Clicks Into{" "}
               </span>
-              <span 
+              <span
                 className="bg-clip-text text-transparent bg-[length:200%_200%] animate-[gradient-shift_4s_ease-in-out_infinite]"
                 style={{
                   backgroundImage: "linear-gradient(135deg, #a855f7 0%, #ec4899 25%, #818cf8 50%, #a855f7 75%, #ec4899 100%)",
@@ -218,7 +170,7 @@ export default function Home() {
             </motion.h1>
 
             {/* Description */}
-            <motion.p 
+            <motion.p
               variants={fadeUp}
               className="text-base sm:text-lg text-zinc-400 max-w-lg leading-relaxed mb-10"
             >
@@ -227,9 +179,9 @@ export default function Home() {
 
             {/* CTA Buttons with glow + scale + arrow animation */}
             <motion.div variants={fadeUp} className="flex flex-wrap gap-4 w-full sm:w-auto mb-8">
-              
+
               {/* Primary: Start Free */}
-              <motion.div 
+              <motion.div
                 className="relative group rounded-xl"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
@@ -237,8 +189,8 @@ export default function Home() {
               >
                 {/* Glow layer */}
                 <div className="absolute -inset-[3px] bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-600 rounded-xl blur-lg opacity-40 group-hover:opacity-75 transition-all duration-500 group-hover:blur-xl" />
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   onClick={handleSimulateConversion}
                   className="relative rounded-xl px-8 bg-white text-zinc-950 hover:bg-zinc-50 font-semibold border-0 h-12 shadow-lg cursor-pointer"
                 >
@@ -260,9 +212,9 @@ export default function Home() {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
               >
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+                <Button
+                  size="lg"
+                  variant="outline"
                   onClick={handleSimulateConversion}
                   className="rounded-xl px-8 border-zinc-700/80 bg-zinc-900/50 hover:bg-zinc-800/70 hover:border-zinc-600 hover:text-white text-zinc-300 font-medium h-12 cursor-pointer transition-all duration-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]"
                 >
@@ -272,7 +224,7 @@ export default function Home() {
             </motion.div>
 
             {/* Social Proof Strip: Stars + Trusted + CAPI Verified */}
-            <motion.div 
+            <motion.div
               variants={fadeUp}
               className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm"
             >
@@ -311,16 +263,16 @@ export default function Home() {
           </motion.div>
 
           {/* ─── RIGHT COLUMN: Floating Dashboard Preview ─── */}
-          <motion.div 
+          <motion.div
             className="lg:col-span-6 relative"
             variants={fadeScale}
             initial="hidden"
             animate="visible"
           >
             {/* Purple glow behind dashboard — pulsating */}
-            <motion.div 
+            <motion.div
               className="absolute -inset-4 bg-gradient-to-tr from-purple-600/25 via-indigo-500/15 to-pink-500/10 rounded-3xl blur-3xl pointer-events-none"
-              animate={{ 
+              animate={{
                 opacity: [0.4, 0.6, 0.4],
                 scale: [1, 1.02, 1],
               }}
@@ -330,15 +282,15 @@ export default function Home() {
             {/* Floating animation wrapper */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
-              transition={{ 
-                duration: 5, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut"
               }}
             >
               {/* Window Container */}
               <div className="relative border border-zinc-800/80 rounded-2xl bg-zinc-950/70 backdrop-blur-2xl shadow-[0_20px_60px_-12px_rgba(168,85,247,0.15),0_0_0_1px_rgba(255,255,255,0.03)] overflow-hidden">
-                
+
                 {/* Window Title Bar */}
                 <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 border-b border-zinc-800/60">
                   <div className="flex items-center gap-1.5">
@@ -357,7 +309,7 @@ export default function Home() {
 
                 {/* Dashboard Inner Content */}
                 <div className="p-5 sm:p-6 space-y-5">
-                  
+
                   {/* Stats Row */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 rounded-xl border border-zinc-800/60 bg-zinc-900/30 space-y-1.5">
@@ -415,7 +367,7 @@ export default function Home() {
                       <span className="font-semibold text-zinc-400">Live API Inflow (CRM)</span>
                       <span>Match Rate: <strong className="text-emerald-400">98.4%</strong></span>
                     </div>
-                    
+
                     <div className="space-y-1.5 min-h-[120px] flex flex-col justify-start">
                       <AnimatePresence initial={false}>
                         {crmFeed.map((item) => (
@@ -453,9 +405,9 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.97 }}
               >
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleSimulateConversion}
                   className="rounded-lg text-[11px] gap-1.5 px-4 border-zinc-800 bg-zinc-900/30 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800/40 transition-all duration-300 cursor-pointer"
                 >
@@ -471,7 +423,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* FEATURE CARDS                                                    */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        <motion.section 
+        <motion.section
           className="space-y-8 pt-16 border-t border-zinc-800/40"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}

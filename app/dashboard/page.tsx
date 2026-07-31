@@ -1,123 +1,135 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/contexts/auth-context"
-import { Navbar } from "@/components/layout/navbar"
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
+import { AnalyticsGrid } from "@/components/dashboard/AnalyticsGrid"
+import { RevenueChart } from "@/components/dashboard/RevenueChart"
+import { CampaignTable } from "@/components/dashboard/CampaignTable"
+import { RecentActivity } from "@/components/dashboard/RecentActivity"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import {
-  LayoutDashboardIcon,
-  BarChart3Icon,
-  UsersIcon,
-  SparklesIcon,
-  MegaphoneIcon,
-  ServerIcon,
-  ArrowRightIcon,
   ShieldCheckIcon,
+  PlusIcon,
+  SparklesIcon,
+  ZapIcon
 } from "lucide-react"
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATIC DUMMY DATA FOR PREMIUM DASHBOARD VISUALS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const aiInsights = [
+  {
+    id: 1,
+    title: "Reallocate Meta Ad Spend",
+    description: "Shift 15% budget from 'EU - Retargeting' to 'US/CA - AI Recommendations'. Predicted lift of +$1,400 in yield.",
+    impact: "High Impact",
+    color: "border-purple-500/30 bg-purple-500/5 text-purple-300",
+  },
+  {
+    id: 2,
+    title: "CAPI Signal Match Rate Drop",
+    description: "Your match rate fell to 94.2% on Safari browser agents. Update external ID hash mapping payload parameters.",
+    impact: "Action Required",
+    color: "border-amber-500/30 bg-amber-500/5 text-amber-300",
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD COMPONENT
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { user } = useAuth()
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col bg-[#030303] text-zinc-100 selection:bg-purple-600 selection:text-white">
-        <Navbar />
-
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          {/* Header Banner */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
+      <DashboardLayout>
+        <div className="space-y-8">
+          
+          {/* Header Title */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-purple-500/30 bg-purple-500/10 text-purple-300 mb-3">
-                <ShieldCheckIcon className="size-3.5 text-purple-400" />
-                <span>Protected Account Workspace</span>
+              <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-semibold border border-purple-500/30 bg-purple-500/10 text-purple-300 mb-2">
+                <ShieldCheckIcon className="size-3 text-purple-400" />
+                <span>GrowthOS System Engine Active</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-100 to-zinc-400">
-                Dashboard Overview
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-100 to-zinc-400">
+                Protected Growth Workspace
               </h1>
-              <p className="text-sm text-zinc-400 mt-1">
-                Welcome back,{" "}
-                <strong className="text-zinc-200">{user?.displayName || user?.email}</strong>. Here is your AI campaign yield.
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Securely viewing system metrics for <strong className="text-zinc-300">{user?.email}</strong>.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              <Link href="/settings">
-                <Button variant="outline" size="sm" className="rounded-xl border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:text-white">
-                  Settings
-                </Button>
-              </Link>
-              <Link href="/profile">
-                <Button size="sm" className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md">
-                  Profile
-                </Button>
-              </Link>
+              <Button variant="outline" size="sm" className="rounded-xl border-zinc-800 text-zinc-400 hover:text-white">
+                Export CSV
+              </Button>
+              <Button size="sm" className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md animate-pulse">
+                <PlusIcon className="size-3.5 mr-1.5" />
+                Create Campaign
+              </Button>
             </div>
           </div>
 
-          {/* Quick Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { label: "Active Campaigns", value: "14", change: "+2 this week", icon: MegaphoneIcon, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-              { label: "CAPI Match Rate", value: "98.6%", change: "+0.4% lift", icon: ServerIcon, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-              { label: "Tracked Conversions", value: "4,892", change: "+18.2% vs last month", icon: UsersIcon, color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-              { label: "AI Suggestions", value: "8 Ready", change: "3 high priority", icon: SparklesIcon, color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-            ].map((metric) => {
-              const Icon = metric.icon
-              return (
-                <Card key={metric.label} className="rounded-2xl border-zinc-800/80 bg-zinc-950/60 backdrop-blur-xl p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{metric.label}</span>
-                    <div className={`flex size-9 items-center justify-center rounded-xl border ${metric.color}`}>
-                      <Icon className="size-4" />
+          {/* 1. Analytics Cards (Visitors | Leads | Conversion | Revenue) */}
+          <AnalyticsGrid />
+
+          {/* 2. Revenue Chart & AI Insights side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <RevenueChart />
+            </div>
+
+            {/* AI Insights Card */}
+            <Card className="rounded-2xl border-zinc-900 bg-zinc-950/40 backdrop-blur-xl p-6 shadow-lg flex flex-col justify-between">
+              <div className="space-y-4">
+                <CardHeader className="p-0">
+                  <CardTitle className="text-md font-bold text-white flex items-center gap-2">
+                    <SparklesIcon className="size-4.5 text-purple-400" />
+                    <span>AI Insights & Recs</span>
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-500">Proactive actions from the scaling engine.</CardDescription>
+                </CardHeader>
+
+                <div className="space-y-3">
+                  {aiInsights.map((rec) => (
+                    <div key={rec.id} className={`p-3 rounded-xl border ${rec.color} space-y-1.5`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider">{rec.title}</span>
+                        <span className="text-[9px] font-medium bg-white/10 px-2 py-0.5 rounded-full">{rec.impact}</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 leading-normal">{rec.description}</p>
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-white tracking-tight">{metric.value}</div>
-                    <div className="text-xs text-emerald-400 mt-1 font-medium">{metric.change}</div>
-                  </div>
-                </Card>
-              )
-            })}
+                  ))}
+                </div>
+              </div>
+
+              <Button variant="outline" className="w-full text-xs font-semibold rounded-lg mt-4 h-9 gap-1.5 border-purple-500/20 bg-purple-500/5 text-purple-300 hover:bg-purple-500/15">
+                <ZapIcon className="size-3.5" />
+                <span>Execute Recommendations</span>
+              </Button>
+            </Card>
           </div>
 
-          {/* Core Modules Card */}
-          <Card className="rounded-2xl border-zinc-800/80 bg-zinc-950/60 backdrop-blur-xl p-6 sm:p-8">
-            <CardHeader className="p-0 mb-6">
-              <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
-                <LayoutDashboardIcon className="size-5 text-purple-400" />
-                <span>Protected GrowthOS AI Stack</span>
-              </CardTitle>
-              <CardDescription className="text-sm text-zinc-400">
-                You are securely authenticated as <code className="text-purple-300 font-mono">{user?.email}</code>.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 space-y-2">
-                <div className="flex items-center gap-2 font-semibold text-zinc-200">
-                  <BarChart3Icon className="size-4 text-purple-400" />
-                  <span>Real-Time Analytics</span>
-                </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Live ROAS metrics and conversion data stream directly from your Meta Pixel and CAPI pipelines.
-                </p>
-              </div>
+          {/* 3. Campaign Table */}
+          <div className="w-full">
+            <CampaignTable />
+          </div>
 
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 space-y-2">
-                <div className="flex items-center gap-2 font-semibold text-zinc-200">
-                  <SparklesIcon className="size-4 text-indigo-400" />
-                  <span>AI Recommendations</span>
-                </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Automated budget reallocation alerts surface continuously to maximize your campaign yield.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
+          {/* 4. Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <RecentActivity />
+            </div>
+          </div>
+
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   )
 }

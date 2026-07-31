@@ -1,23 +1,20 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/contexts/auth-context"
-import { Navbar } from "@/components/layout/navbar"
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { SettingsIcon, KeyIcon, BellIcon, ShieldCheckIcon, LockIcon } from "lucide-react"
+import { KeyIcon, ShieldCheckIcon, LockIcon } from "lucide-react"
 
 export default function SettingsPage() {
   const { user } = useAuth()
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen flex flex-col bg-[#030303] text-zinc-100 selection:bg-purple-600 selection:text-white">
-        <Navbar />
-
-        <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <DashboardLayout>
+        <div className="space-y-8">
           {/* Header */}
           <div className="border-b border-zinc-800/80 pb-6">
             <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-purple-500/30 bg-purple-500/10 text-purple-300 mb-3">
@@ -93,8 +90,8 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   )
 }

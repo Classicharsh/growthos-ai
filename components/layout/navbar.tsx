@@ -257,7 +257,7 @@ export function Navbar() {
                         key={feature.title}
                         className="p-0"
                         render={
-                          <a
+                          <Link
                             href={feature.href}
                             className="flex items-start gap-4 rounded-xl p-3 hover:bg-muted/50 transition-colors"
                           />
@@ -381,6 +381,7 @@ export function Navbar() {
                 variant="ghost" 
                 size="sm" 
                 render={<Link href="/login" />}
+                nativeButton={false}
                 className="text-muted-foreground hover:text-foreground font-medium cursor-pointer"
               >
                 Login
@@ -388,6 +389,7 @@ export function Navbar() {
               <Button 
                 size="sm" 
                 render={<Link href="/signup" />}
+                nativeButton={false}
                 className="shadow-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:shadow-md cursor-pointer"
               >
                 Get Started
@@ -422,9 +424,16 @@ export function Navbar() {
                   
                   {/* Features Section */}
                   <div>
-                    <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    <SheetClose
+                      render={
+                        <Link
+                          href="/features"
+                          className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 hover:text-primary transition-colors"
+                        />
+                      }
+                    >
                       Features
-                    </h4>
+                    </SheetClose>
                     <div className="space-y-1">
                       {features.map((feature) => {
                         const Icon = feature.icon
@@ -432,7 +441,7 @@ export function Navbar() {
                           <SheetClose
                             key={feature.title}
                             render={
-                              <a
+                              <Link
                                 href={feature.href}
                                 className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                               />
@@ -460,7 +469,7 @@ export function Navbar() {
                           <SheetClose
                             key={link.label}
                             render={
-                              <a
+                              <Link
                                 href={link.href}
                                 className={`block rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
                                   isActive 
@@ -489,7 +498,7 @@ export function Navbar() {
                           <SheetClose
                             key={res.title}
                             render={
-                              <a
+                              <Link
                                 href={res.href}
                                 className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                               />
@@ -525,7 +534,7 @@ export function Navbar() {
                       <div className="grid grid-cols-2 gap-2">
                         <SheetClose
                           render={
-                            <a href="/profile" className="w-full" />
+                            <Link href="/profile" className="w-full" />
                           }
                         >
                           <Button variant="outline" className="w-full text-xs font-semibold justify-center h-8" size="sm">
@@ -545,7 +554,7 @@ export function Navbar() {
                     <div className="flex flex-col gap-2">
                       <SheetClose
                         render={
-                          <a href="/login" className="w-full" />
+                          <Link href="/login" className="w-full" />
                         }
                       >
                         <Button variant="outline" className="w-full justify-center cursor-pointer">
@@ -554,7 +563,7 @@ export function Navbar() {
                       </SheetClose>
                       <SheetClose
                         render={
-                          <a href="/signup" className="w-full" />
+                          <Link href="/signup" className="w-full" />
                         }
                       >
                         <Button className="w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer">
