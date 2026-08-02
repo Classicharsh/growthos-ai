@@ -3,14 +3,14 @@ import { MetaCapiEventRequest } from '../types/meta-capi.types';
 
 /**
  * Validates incoming Conversion API tracking requests.
- * Ensures critical fields like eventName, actionSource, and userData exist.
+ * Ensures critical fields exist: eventName, eventSourceUrl, clientIpAddress, clientUserAgent.
  */
 export const validateEventPayload = (
   req: Request<{}, {}, MetaCapiEventRequest>,
   res: Response,
   next: NextFunction
 ): void => {
-  const { eventName, actionSource, userData } = req.body;
+  const { eventName, eventSourceUrl, clientIpAddress, clientUserAgent } = req.body;
 
   const errors: string[] = [];
 
@@ -18,26 +18,16 @@ export const validateEventPayload = (
     errors.push('Missing field: eventName');
   }
 
-  const validActionSources = [
-    'email', 'website', 'app', 'phone_call', 'chat', 'physical_store', 'system_generated', 'other'
-  ];
-  if (!actionSource) {
-    errors.push('Missing field: actionSource');
-  } else if (!validActionSources.includes(actionSource)) {
-    errors.push(`Invalid actionSource. Must be one of: ${validActionSources.join(', ')}`);
+  if (!eventSourceUrl) {
+    errors.push('Missing field: eventSourceUrl');
   }
 
-  if (!userData) {
-    errors.push('Missing field: userData');
-  } else {
-    // Check for at least one piece of identifiable user data or fbp/fbc
-    const identityFields = [
-      'email', 'phone', 'firstName', 'lastName', 'gender', 'dateOfBirth', 'city', 'state', 'zip', 'country', 'fbc', 'fbp'
-    ];
-    const hasIdentityField = identityFields.some(field => !!(userData as any)[field]);
-    if (!hasIdentityField) {
-      errors.push('userData must contain at least one user identifier or browser cookie ID (email, phone, fbp, fbc, etc.)');
-    }
+  if (!clientIpAddress) {
+    errors.push('Missing field: clientIpAddress');
+  }
+
+  if (!clientUserAgent) {
+    errors.push('Missing field: clientUserAgent');
   }
 
   if (errors.length > 0) {

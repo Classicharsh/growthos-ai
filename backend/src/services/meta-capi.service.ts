@@ -1,85 +1,62 @@
-import { metaCapiConfig } from '../config/meta-capi.config';
+import { metaCapiConfig, validateConfig } from '../config/meta-capi.config';
 import { MetaCapiEvent, MetaCapiEventRequest, MetaUserData } from '../types/meta-capi.types';
 import { hashSha256 } from '../utils/crypto';
 import { logger } from '../utils/logger';
 
 export class MetaCapiService {
   /**
-   * Normalizes incoming user data properties to conform to Meta's hashing specifications.
-   * Properties such as email, phone, first/last name, etc., are normalized and hashed with SHA-256.
-   * Non-PII properties like IP Address, User Agent, and Browser/Click IDs (fbp/fbc) are retained unhashed.
+   * Normalizes and hashes sensitive customer information properties.
+   * Standard PII properties are lowercase/trimmed and SHA-256 hashed.
    * 
-   * @param rawUserData Raw user details from the client/application
-   * @returns Normalized and hashed MetaUserData object
+   * @param rawRequest Raw request input parameters
+   * @returns Formatted MetaUserData payload
    */
-  public static normalizeUserData(rawUserData: MetaCapiEventRequest['userData']): MetaUserData {
+  public static normalizeUserData(rawRequest: MetaCapiEventRequest): MetaUserData {
     const userData: MetaUserData = {};
 
-    // 1. Map & Hash PII Properties
-    if (rawUserData.email) {
-      userData.em = [hashSha256(rawUserData.email)!];
+    // Hash PII
+    if (rawRequest.email) {
+      userData.em = [hashSha256(rawRequest.email)!];
     }
-    if (rawUserData.phone) {
-      userData.ph = [hashSha256(rawUserData.phone)!];
+    if (rawRequest.phone) {
+      userData.ph = [hashSha256(rawRequest.phone)!];
     }
-    if (rawUserData.firstName) {
-      userData.fn = [hashSha256(rawUserData.firstName)!];
+    if (rawRequest.firstName) {
+      userData.fn = [hashSha256(rawRequest.firstName)!];
     }
-    if (rawUserData.lastName) {
-      userData.ln = [hashSha256(rawUserData.lastName)!];
-    }
-    if (rawUserData.gender) {
-      userData.ge = [hashSha256(rawUserData.gender)!];
-    }
-    if (rawUserData.dateOfBirth) {
-      userData.db = [hashSha256(rawUserData.dateOfBirth)!];
-    }
-    if (rawUserData.city) {
-      userData.ct = [hashSha256(rawUserData.city)!];
-    }
-    if (rawUserData.state) {
-      userData.st = [hashSha256(rawUserData.state)!];
-    }
-    if (rawUserData.zip) {
-      userData.zp = [hashSha256(rawUserData.zip)!];
-    }
-    if (rawUserData.country) {
-      userData.country = [hashSha256(rawUserData.country)!];
+    if (rawRequest.lastName) {
+      userData.ln = [hashSha256(rawRequest.lastName)!];
     }
 
-    // 2. Map Unhashed Properties (IP, User Agent, Click/Browser IDs)
-    if (rawUserData.clientIpAddress) {
-      userData.client_ip_address = rawUserData.clientIpAddress;
+    // Set unhashed network/client identifiers
+    if (rawRequest.clientIpAddress) {
+      userData.client_ip_address = rawRequest.clientIpAddress;
     }
-    if (rawUserData.clientUserAgent) {
-      userData.client_user_agent = rawUserData.clientUserAgent;
+    if (rawRequest.clientUserAgent) {
+      userData.client_user_agent = rawRequest.clientUserAgent;
     }
-    if (rawUserData.fbc) {
-      userData.fbc = rawUserData.fbc;
+    if (rawRequest.fbc) {
+      userData.fbc = rawRequest.fbc;
     }
-    if (rawUserData.fbp) {
-      userData.fbp = rawUserData.fbp;
+    if (rawRequest.fbp) {
+      userData.fbp = rawRequest.fbp;
     }
 
     return userData;
   }
 
   /**
-   * Prepares a standard CAPI event payload by validating configurations, 
-   * normalizing the user data, and forming the final event object structure.
-   * 
-   * @param request The API request event payload details
-   * @returns Formatted MetaCapiEvent payload ready to be sent
+   * Prepares the server event structure.
    */
   public static prepareEvent(request: MetaCapiEventRequest): MetaCapiEvent {
-    const normalizedUserData = this.normalizeUserData(request.userData);
+    const normalizedUserData = this.normalizeUserData(request);
 
     const event: MetaCapiEvent = {
       event_name: request.eventName,
       event_time: request.eventTime || Math.floor(Date.now() / 1000),
       event_id: request.eventId,
       event_source_url: request.eventSourceUrl,
-      action_source: request.actionSource,
+      action_source: request.actionSource || 'website',
       user_data: normalizedUserData,
       custom_data: request.customData,
     };
@@ -88,24 +65,62 @@ export class MetaCapiService {
   }
 
   /**
-   * Reusable service method to process and queue/send events.
-   * Core placeholder for dispatching events without making actual network requests.
+   * Dispatches the event to the Meta Graph API.
    * 
-   * @param request The event payload containing name, source, user data, and custom data
+   * @param request CAPI event request details
+   * @returns Response metadata from Meta
    */
-  public static async processEvent(request: MetaCapiEventRequest): Promise<{ success: boolean; event: MetaCapiEvent }> {
-    logger.info(`Processing event tracking request for: ${request.eventName}`);
+  public static async processEvent(request: MetaCapiEventRequest): Promise<{ success: boolean; data: any }> {
+    // 1. Verify that critical environment configuration parameters exist
+    validateConfig();
 
-    // Prepares the payload with full data normalization & hashing
-    const preparedPayload = this.prepareEvent(request);
+    logger.info(`Sending '${request.eventName}' event to Meta Graph API...`);
 
-    // Architectural placeholder for the API Call (Do NOT call standard graph APIs or Axios yet)
-    logger.info('Meta CAPI payload successfully constructed and normalized:', preparedPayload);
-    logger.info(`[CAPI ARCHITECTURE PLACEHOLDER] Event '${request.eventName}' would be sent to Pixel ${metaCapiConfig.pixelId}`);
+    // 2. Format event payload
+    const preparedEvent = this.prepareEvent(request);
 
-    return {
-      success: true,
-      event: preparedPayload,
+    // 3. Construct Meta Graph API payload
+    const payload: { data: MetaCapiEvent[]; test_event_code?: string } = {
+      data: [preparedEvent],
     };
+
+    // If testEventCode is configured in environment, append it
+    if (metaCapiConfig.testEventCode) {
+      payload.test_event_code = metaCapiConfig.testEventCode;
+      logger.info(`Adding test event code: ${metaCapiConfig.testEventCode}`);
+    }
+
+    const url = `${metaCapiConfig.apiUrl}/${metaCapiConfig.apiVersion}/${metaCapiConfig.pixelId}/events?access_token=${metaCapiConfig.accessToken}`;
+
+    // 4. Dispatch active Graph API call via native Fetch
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = (await response.json()) as any;
+
+      if (!response.ok) {
+        logger.error('Meta Graph API request failed:', responseData);
+        throw {
+          status: response.status,
+          message: responseData.error?.message || 'Meta CAPI API failed response.',
+          details: responseData,
+        };
+      }
+
+      logger.info(`Successfully sent '${request.eventName}' to Meta:`, responseData);
+      return {
+        success: true,
+        data: responseData,
+      };
+    } catch (error: any) {
+      logger.error('Outbound request network error:', error);
+      throw error;
+    }
   }
 }

@@ -27,7 +27,7 @@ export interface MetaUserData {
 
 /**
  * Meta Conversion API Custom Data Parameter.
- * Contains custom properties about the event (e.g. value, currency, content items).
+ * Contains custom properties about the event.
  * Reference: https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/custom-data
  */
 export interface MetaCustomData {
@@ -50,7 +50,7 @@ export interface MetaCustomData {
   status?: string;
   predicted_ltv?: number;
   order_id?: string;
-  [key: string]: any; // Allow for other custom parameters
+  [key: string]: any;
 }
 
 /**
@@ -69,29 +69,24 @@ export interface MetaCapiEvent {
 }
 
 /**
- * Request payload structure expected by our controllers.
+ * Flat JSON payload expected for a PageView or generic event.
  */
 export interface MetaCapiEventRequest {
   eventName: string;
   eventTime?: number;
   eventId?: string;
-  eventSourceUrl?: string;
-  actionSource: 'email' | 'website' | 'app' | 'phone_call' | 'chat' | 'physical_store' | 'system_generated' | 'other';
-  userData: {
-    email?: string;
-    phone?: string;
-    firstName?: string;
-    lastName?: string;
-    gender?: string;
-    dateOfBirth?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    country?: string;
-    clientIpAddress?: string;
-    clientUserAgent?: string;
-    fbc?: string;
-    fbp?: string;
-  };
+  eventSourceUrl: string;
+  clientIpAddress: string;
+  clientUserAgent: string;
+  actionSource?: 'email' | 'website' | 'app' | 'phone_call' | 'chat' | 'physical_store' | 'system_generated' | 'other';
+  
+  // Optional customer information properties for matching:
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  fbc?: string;
+  fbp?: string;
+  
   customData?: MetaCustomData;
 }
