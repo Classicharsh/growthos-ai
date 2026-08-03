@@ -25,11 +25,11 @@ export function Sidebar({ onClose, className = "" }: SidebarProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboardIcon },
-    { name: "Analytics", href: "/analytics", icon: TrendingUpIcon },
-    { name: "Campaigns", href: "/campaigns", icon: FolderIcon },
-    { name: "AI Insights", href: "/insights", icon: SparklesIcon },
-    { name: "Settings", href: "/settings", icon: SettingsIcon },
-    { name: "Profile", href: "/profile", icon: UserIcon },
+    { name: "Analytics", href: "/dashboard/analytics", icon: TrendingUpIcon },
+    { name: "Campaigns", href: "/dashboard/campaigns", icon: FolderIcon },
+    { name: "AI Insights", href: "/dashboard/insights", icon: SparklesIcon },
+    { name: "Settings", href: "/dashboard/settings", icon: SettingsIcon },
+    { name: "Profile", href: "/dashboard/profile", icon: UserIcon },
   ]
 
   return (

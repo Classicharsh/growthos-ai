@@ -4,6 +4,7 @@ import * as React from "react"
 import { Sidebar } from "./Sidebar"
 import { TopNavbar } from "./TopNavbar"
 import { AnimatePresence, motion } from "framer-motion"
+import { usePathname } from "next/navigation"
 
 export interface DashboardLayoutProps {
   children: React.ReactNode
@@ -23,6 +24,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       document.body.style.overflow = "unset"
     }
   }, [sidebarOpen])
+
+  const pathname = usePathname()
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#030303] text-zinc-100 font-sans antialiased">
@@ -67,7 +70,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Content Viewport scrollable */}
         <main className="flex-1 overflow-y-auto focus:outline-hidden">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-            {children}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
       </div>
