@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MegaphoneIcon, PlusIcon, InboxIcon } from "lucide-react"
+import { MegaphoneIcon, PlusIcon, InboxIcon, AlertTriangleIcon } from "lucide-react"
 import { Campaign, dummyCampaigns } from "./types"
 import { CampaignSearch } from "./CampaignSearch"
 import { CampaignFilters } from "./CampaignFilters"
@@ -12,10 +12,12 @@ import { CampaignStatusBadge } from "./CampaignStatusBadge"
 import { CampaignActions } from "./CampaignActions"
 import { CampaignPagination } from "./CampaignPagination"
 import { CampaignSkeleton } from "./CampaignSkeleton"
+import { campaignService } from "@/services/campaign.service"
 
 export function CampaignTable() {
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([])
   const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [searchTerm, setSearchTerm] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<Campaign["status"] | "All">("All")
   const [sortByDate, setSortByDate] = React.useState<"newest" | "oldest">("newest")
@@ -23,14 +25,23 @@ export function CampaignTable() {
   
   const itemsPerPage = 5
 
+  const fetchCampaigns = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await campaignService.getCampaigns()
+      setCampaigns(data)
+    } catch (err: any) {
+      setError(err?.message || "Failed to load campaigns. Please check your network connection.")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   // Simulate data fetch on mount
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setCampaigns(dummyCampaigns)
-      setLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
-  }, [])
+    fetchCampaigns()
+  }, [fetchCampaigns])
 
   // Handlers
   const handleStatusChange = (id: string, newStatus: Campaign["status"]) => {
@@ -116,92 +127,114 @@ export function CampaignTable() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0 overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-900/65 text-zinc-500 font-medium">
-                <th className="pb-3 pr-4 font-semibold">Campaign Name</th>
-                <th className="pb-3 px-4 font-semibold">Status</th>
-                <th className="pb-3 px-4 text-right font-semibold">Budget</th>
-                <th className="pb-3 px-4 text-right font-semibold">Spend</th>
-                <th className="pb-3 px-4 text-right font-semibold">CTR</th>
-                <th className="pb-3 px-4 text-right font-semibold">CPC</th>
-                <th className="pb-3 px-4 text-right font-semibold">ROAS</th>
-                <th className="pb-3 px-4 text-right font-semibold">Created Date</th>
-                <th className="pb-3 pl-4 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-900/30">
-              <AnimatePresence mode="popLayout">
-                {paginatedCampaigns.length > 0 ? (
-                  paginatedCampaigns.map((camp) => (
-                    <motion.tr
-                      key={camp.id}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.2 }}
-                      className="group border-b border-zinc-900/30 hover:bg-zinc-900/10 transition-colors"
-                    >
-                      <td className="py-4 pr-4 font-bold text-zinc-200 group-hover:text-white transition-colors">
-                        {camp.name}
-                      </td>
-                      <td className="py-4 px-4">
-                        <CampaignStatusBadge status={camp.status} />
-                      </td>
-                      <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
-                        ${camp.budget.toLocaleString()}
-                      </td>
-                      <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
-                        ${camp.spend.toLocaleString()}
-                      </td>
-                      <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
-                        {camp.ctr > 0 ? `${camp.ctr.toFixed(2)}%` : "—"}
-                      </td>
-                      <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
-                        {camp.cpc > 0 ? `$${camp.cpc.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="py-4 px-4 text-right text-purple-300 font-mono font-bold">
-                        {camp.roas > 0 ? `${camp.roas.toFixed(1)}x` : "—"}
-                      </td>
-                      <td className="py-4 px-4 text-right text-zinc-500 font-mono font-semibold whitespace-nowrap">
-                        {camp.createdAt}
-                      </td>
-                      <td className="py-4 pl-4 text-right">
-                        <CampaignActions
-                          campaign={camp}
-                          onStatusChange={handleStatusChange}
-                          onDelete={handleDelete}
-                        />
-                      </td>
-                    </motion.tr>
-                  ))
-                ) : (
-                  <motion.tr
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="h-48"
-                  >
-                    <td colSpan={9} className="text-center py-12 text-zinc-600 font-medium">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <InboxIcon className="size-8 text-zinc-700" />
-                        <span>No campaigns match the selection criteria.</span>
-                      </div>
-                    </td>
-                  </motion.tr>
-                )}
-              </AnimatePresence>
-            </tbody>
-          </table>
-        </CardContent>
+        {error ? (
+          <CardContent className="p-0">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="rounded-full bg-rose-500/10 p-3.5 mb-4">
+                <AlertTriangleIcon className="size-6 text-rose-400 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-semibold text-zinc-200 mb-1">Failed to load campaigns</h3>
+              <p className="text-xs text-zinc-500 max-w-xs mb-4">
+                {error}
+              </p>
+              <Button 
+                onClick={fetchCampaigns}
+                className="rounded-xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 text-xs px-4 h-9 cursor-pointer transition-all duration-200"
+              >
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        ) : (
+          <>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-900/65 text-zinc-500 font-medium">
+                    <th className="pb-3 pr-4 font-semibold">Campaign Name</th>
+                    <th className="pb-3 px-4 font-semibold">Status</th>
+                    <th className="pb-3 px-4 text-right font-semibold">Budget</th>
+                    <th className="pb-3 px-4 text-right font-semibold">Spend</th>
+                    <th className="pb-3 px-4 text-right font-semibold">CTR</th>
+                    <th className="pb-3 px-4 text-right font-semibold">CPC</th>
+                    <th className="pb-3 px-4 text-right font-semibold">ROAS</th>
+                    <th className="pb-3 px-4 text-right font-semibold">Created Date</th>
+                    <th className="pb-3 pl-4 text-right font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-900/30">
+                  <AnimatePresence mode="popLayout">
+                    {paginatedCampaigns.length > 0 ? (
+                      paginatedCampaigns.map((camp) => (
+                        <motion.tr
+                          key={camp.id}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.2 }}
+                          className="group border-b border-zinc-900/30 hover:bg-zinc-900/10 transition-colors"
+                        >
+                          <td className="py-4 pr-4 font-bold text-zinc-200 group-hover:text-white transition-colors">
+                            {camp.name}
+                          </td>
+                          <td className="py-4 px-4">
+                            <CampaignStatusBadge status={camp.status} />
+                          </td>
+                          <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
+                            ${camp.budget.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
+                            ${camp.spend.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
+                            {camp.ctr > 0 ? `${camp.ctr.toFixed(2)}%` : "—"}
+                          </td>
+                          <td className="py-4 px-4 text-right text-zinc-400 font-mono font-medium">
+                            {camp.cpc > 0 ? `$${camp.cpc.toFixed(2)}` : "—"}
+                          </td>
+                          <td className="py-4 px-4 text-right text-purple-300 font-mono font-bold">
+                            {camp.roas > 0 ? `${camp.roas.toFixed(1)}x` : "—"}
+                          </td>
+                          <td className="py-4 px-4 text-right text-zinc-500 font-mono font-semibold whitespace-nowrap">
+                            {camp.createdAt}
+                          </td>
+                          <td className="py-4 pl-4 text-right">
+                            <CampaignActions
+                              campaign={camp}
+                              onStatusChange={handleStatusChange}
+                              onDelete={handleDelete}
+                            />
+                          </td>
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="h-48"
+                      >
+                        <td colSpan={9} className="text-center py-12 text-zinc-600 font-medium">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <InboxIcon className="size-8 text-zinc-700" />
+                            <span>No campaigns match the selection criteria.</span>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </CardContent>
 
-        <CampaignPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={processedCampaigns.length}
-          itemsPerPage={itemsPerPage}
-        />
+            <CampaignPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={processedCampaigns.length}
+              itemsPerPage={itemsPerPage}
+            />
+          </>
+        )}
       </Card>
     </div>
   )

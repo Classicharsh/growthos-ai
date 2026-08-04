@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const meta_capi_routes_1 = require("./routes/meta-capi.routes");
+const dashboard_routes_1 = require("./routes/dashboard.routes");
+const campaign_routes_1 = require("./routes/campaign.routes");
 const error_middleware_1 = require("./middleware/error.middleware");
 const app = (0, express_1.default)();
 // Standard middleware
@@ -20,6 +22,8 @@ app.get('/', (req, res) => {
     });
 });
 app.use('/api/v1/meta-capi', meta_capi_routes_1.metaCapiRouter);
+app.use('/api/v1/dashboard', dashboard_routes_1.dashboardRouter);
+app.use('/api/v1/campaigns', campaign_routes_1.campaignRouter);
 // Global Error Handler
 app.use(error_middleware_1.errorHandler);
 exports.default = app;

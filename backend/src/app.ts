@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { metaCapiRouter } from './routes/meta-capi.routes';
 import { dashboardRouter } from './routes/dashboard.routes';
+import { campaignRouter } from './routes/campaign.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 const app: Express = express();
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1/meta-capi', metaCapiRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/campaigns', campaignRouter);
 
 // Global Error Handler
 app.use(errorHandler);
