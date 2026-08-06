@@ -8,8 +8,55 @@ import { CampaignTable } from "@/components/dashboard/campaigns/CampaignTable"
 import { Button } from "@/components/ui/button"
 import { ShieldCheckIcon, PlusIcon } from "lucide-react"
 
+import { CampaignStatsGrid, CampaignStats } from "@/components/dashboard/campaigns/CampaignStatsGrid"
+import { CampaignModal } from "@/components/dashboard/campaigns/CampaignModal"
+import { CampaignForm, CampaignFormValues } from "@/components/dashboard/campaigns/CampaignForm"
+import { campaignService } from "@/services/campaign.service"
+import { toast } from "sonner"
+
 export default function CampaignsPage() {
   const { user } = useAuth()
+  const [stats, setStats] = React.useState<CampaignStats | null>(null)
+  const [statsLoading, setStatsLoading] = React.useState(true)
+  const [isCreateOpen, setIsCreateOpen] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0)
+
+  const fetchStats = React.useCallback(async () => {
+    setStatsLoading(true)
+    try {
+      const data = await campaignService.getCampaignStats()
+      setStats(data)
+    } catch (err) {
+      console.error("Failed to fetch campaign stats:", err)
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    fetchStats()
+  }, [fetchStats, refreshTrigger])
+
+  const handleCreateSubmit = async (values: CampaignFormValues) => {
+    setIsSubmitting(true)
+    try {
+      // Map form objective, platform, budget, status, name to service
+      await campaignService.createCampaign({
+        name: values.name,
+        objective: values.objective as any,
+        budget: values.budget,
+        status: values.status as any,
+      })
+      toast.success("Campaign created successfully!")
+      setIsCreateOpen(false)
+      setRefreshTrigger((prev) => prev + 1)
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create campaign")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <ProtectedRoute>
@@ -32,19 +79,43 @@ export default function CampaignsPage() {
             </div>
 
             <div className="flex items-center self-start md:self-center">
-              <Button className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold shadow-lg text-xs gap-1.5 h-10 px-4 cursor-pointer transition-all duration-200">
+              <Button 
+                onClick={() => setIsCreateOpen(true)}
+                className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold shadow-lg text-xs gap-1.5 h-10 px-4 cursor-pointer transition-all duration-200"
+              >
                 <PlusIcon className="size-4" />
                 <span>Create Campaign</span>
               </Button>
             </div>
           </div>
 
+          {/* Stats Cards Section */}
+          <div className="w-full">
+            <CampaignStatsGrid stats={stats} loading={statsLoading} />
+          </div>
+
           {/* Below Header: Contains Search, Filters, Table and Pagination */}
           <div className="w-full">
-            <CampaignTable />
+            <CampaignTable 
+              refreshTrigger={refreshTrigger} 
+              onCampaignsChange={() => setRefreshTrigger((prev) => prev + 1)} 
+            />
           </div>
 
         </div>
+
+        {/* Create Campaign Modal */}
+        <CampaignModal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          title="Create New Campaign"
+        >
+          <CampaignForm 
+            onSubmit={handleCreateSubmit}
+            onCancel={() => setIsCreateOpen(false)}
+            isLoading={isSubmitting}
+          />
+        </CampaignModal>
       </DashboardLayout>
     </ProtectedRoute>
   )

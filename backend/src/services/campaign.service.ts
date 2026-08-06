@@ -1,6 +1,6 @@
 import { Campaign } from '../types/campaign.types';
 
-const mockCampaigns: Campaign[] = [
+let mockCampaigns: Campaign[] = [
   {
     id: "camp-01",
     name: "US - Lookalike Purchases 2%",
@@ -118,7 +118,6 @@ export class CampaignService {
    * Fetches all campaigns.
    */
   public static async getCampaigns(): Promise<Campaign[]> {
-    // Simulate minor asynchronous retrieval delay
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(mockCampaigns);
@@ -135,6 +134,95 @@ export class CampaignService {
         const campaign = mockCampaigns.find((c) => c.id === id);
         resolve(campaign || null);
       }, 30);
+    });
+  }
+
+  /**
+   * Creates a new campaign.
+   */
+  public static async createCampaign(campaignData: Omit<Campaign, 'id' | 'spend' | 'ctr' | 'cpc' | 'roas' | 'createdAt'>): Promise<Campaign> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newCampaign: Campaign = {
+          ...campaignData,
+          id: `camp-${Math.random().toString(36).substr(2, 9)}`,
+          spend: 0,
+          ctr: 0,
+          cpc: 0,
+          roas: 0,
+          createdAt: new Date().toISOString().split('T')[0],
+        };
+        mockCampaigns.push(newCampaign);
+        resolve(newCampaign);
+      }, 50);
+    });
+  }
+
+  /**
+   * Updates an existing campaign.
+   */
+  public static async updateCampaign(id: string, updateData: Partial<Campaign>): Promise<Campaign | null> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockCampaigns.findIndex((c) => c.id === id);
+        if (index === -1) {
+          resolve(null);
+          return;
+        }
+        mockCampaigns[index] = {
+          ...mockCampaigns[index],
+          ...updateData,
+          id, // protect id integrity
+        };
+        resolve(mockCampaigns[index]);
+      }, 50);
+    });
+  }
+
+  /**
+   * Deletes a campaign.
+   */
+  public static async deleteCampaign(id: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const index = mockCampaigns.findIndex((c) => c.id === id);
+        if (index === -1) {
+          resolve(false);
+          return;
+        }
+        mockCampaigns.splice(index, 1);
+        resolve(true);
+      }, 50);
+    });
+  }
+
+  /**
+   * Calculates aggregated campaign statistics.
+   */
+  public static async getCampaignStats(): Promise<{
+    totalCampaigns: number;
+    activeCampaigns: number;
+    totalSpend: number;
+    averageRoas: number;
+  }> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const totalCampaigns = mockCampaigns.length;
+        const activeCampaigns = mockCampaigns.filter((c) => c.status === 'Active').length;
+        const totalSpend = mockCampaigns.reduce((sum, c) => sum + c.spend, 0);
+        
+        const campaignsWithRoas = mockCampaigns.filter((c) => c.roas > 0);
+        const averageRoas = campaignsWithRoas.length > 0
+          ? parseFloat((campaignsWithRoas.reduce((sum, c) => sum + c.roas, 0) / campaignsWithRoas.length).toFixed(2))
+          : 0;
+
+        resolve({
+          totalCampaigns,
+          activeCampaigns,
+          totalSpend,
+          averageRoas,
+        });
+      }, 50);
     });
   }
 }

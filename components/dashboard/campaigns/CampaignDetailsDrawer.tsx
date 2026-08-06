@@ -125,11 +125,11 @@ export function CampaignDetailsDrawer({
                   <div className="p-3.5 rounded-xl border border-zinc-900 bg-zinc-950/40 space-y-2 text-xs">
                     <div className="flex justify-between">
                       <span className="text-zinc-500">Objective</span>
-                      <span className="font-semibold text-zinc-300">Conversions (CAPI)</span>
+                      <span className="font-semibold text-zinc-300">{campaign.objective || "Conversions"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-zinc-500">Primary Channel</span>
-                      <span className="font-semibold text-zinc-300">Facebook Meta Network</span>
+                      <span className="font-semibold text-zinc-300">{campaign.platform || "Facebook Ads"}</span>
                     </div>
                   </div>
                 </div>

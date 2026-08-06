@@ -10,6 +10,11 @@ export interface Campaign {
   cpc: number;
   roas: number;
   createdAt: string;
+  objective?: string;
+  platform?: string;
+  currency?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export const dummyCampaigns: Campaign[] = [

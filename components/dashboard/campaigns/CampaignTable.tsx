@@ -4,26 +4,55 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MegaphoneIcon, PlusIcon, InboxIcon, AlertTriangleIcon } from "lucide-react"
-import { Campaign, dummyCampaigns } from "./types"
+import { MegaphoneIcon, InboxIcon, AlertTriangleIcon, ArrowUpDownIcon } from "lucide-react"
+import { Campaign } from "./types"
 import { CampaignSearch } from "./CampaignSearch"
 import { CampaignFilters } from "./CampaignFilters"
 import { CampaignStatusBadge } from "./CampaignStatusBadge"
 import { CampaignActions } from "./CampaignActions"
 import { CampaignPagination } from "./CampaignPagination"
 import { CampaignSkeleton } from "./CampaignSkeleton"
+import { CampaignDetailsDrawer } from "./CampaignDetailsDrawer"
+import { DeleteCampaignDialog } from "./DeleteCampaignDialog"
+import { CampaignModal } from "./CampaignModal"
+import { CampaignForm, CampaignFormValues } from "./CampaignForm"
 import { campaignService } from "@/services/campaign.service"
+import { toast } from "sonner"
 
-export function CampaignTable() {
+interface CampaignTableProps {
+  refreshTrigger?: number
+  onCampaignsChange?: () => void
+}
+
+export function CampaignTable({ refreshTrigger = 0, onCampaignsChange }: CampaignTableProps) {
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState<Campaign["status"] | "All">("All")
-  const [sortByDate, setSortByDate] = React.useState<"newest" | "oldest">("newest")
-  const [currentPage, setCurrentPage] = React.useState(1)
   
+  // Search state with debouncing
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+  
+  const [statusFilter, setStatusFilter] = React.useState<Campaign["status"] | "All">("All")
+  
+  // Sorting state
+  const [sortColumn, setSortColumn] = React.useState<"budget" | "spend" | "roas" | "createdAt">("createdAt")
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc")
+  
+  const [currentPage, setCurrentPage] = React.useState(1)
   const itemsPerPage = 5
+
+  // Drawer / Modal states
+  const [selectedCampaign, setSelectedCampaign] = React.useState<Campaign | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
+  
+  const [editingCampaign, setEditingCampaign] = React.useState<Campaign | null>(null)
+  const [isEditOpen, setIsEditOpen] = React.useState(false)
+  const [isUpdating, setIsUpdating] = React.useState(false)
+  
+  const [campaignToDelete, setCampaignToDelete] = React.useState<Campaign | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState(false)
 
   const fetchCampaigns = React.useCallback(async () => {
     setLoading(true)
@@ -38,29 +67,136 @@ export function CampaignTable() {
     }
   }, [])
 
-  // Simulate data fetch on mount
+  // Fetch campaigns on mount and when external refresh trigger fires
   React.useEffect(() => {
     fetchCampaigns()
-  }, [fetchCampaigns])
+  }, [fetchCampaigns, refreshTrigger])
 
-  // Handlers
-  const handleStatusChange = (id: string, newStatus: Campaign["status"]) => {
+  // Debouncing search term effect
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [searchTerm])
+
+  // Handlers for campaign status toggle
+  const handleStatusChange = async (id: string, newStatus: Campaign["status"]) => {
+    // Optimistic UI update
+    const previousCampaigns = [...campaigns]
     setCampaigns((prev) =>
       prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
     )
+
+    try {
+      await campaignService.updateCampaign(id, { status: newStatus })
+      toast.success(`Campaign ${newStatus === "Active" ? "resumed" : "paused"} successfully.`)
+      
+      // Update local drawer state if open
+      if (selectedCampaign && selectedCampaign.id === id) {
+        setSelectedCampaign((prev) => (prev ? { ...prev, status: newStatus } : null))
+      }
+      onCampaignsChange?.()
+    } catch (err: any) {
+      // Rollback
+      setCampaigns(previousCampaigns)
+      toast.error(err?.message || "Failed to update campaign status.")
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setCampaigns((prev) => prev.filter((c) => c.id !== id))
+  // Edit details triggers
+  const handleEditOpen = (campaign: Campaign) => {
+    setEditingCampaign(campaign)
+    setIsEditOpen(true)
   }
 
-  // Filter, Search, and Sort
+  const handleEditSubmit = async (values: CampaignFormValues) => {
+    if (!editingCampaign) return
+    setIsUpdating(true)
+    try {
+      const updated = await campaignService.updateCampaign(editingCampaign.id, {
+        name: values.name,
+        budget: values.budget,
+        status: values.status as any,
+      })
+      toast.success("Campaign updated successfully.")
+      setIsEditOpen(false)
+      
+      // Update state
+      setCampaigns((prev) => prev.map((c) => (c.id === editingCampaign.id ? updated : c)))
+      if (selectedCampaign && selectedCampaign.id === editingCampaign.id) {
+        setSelectedCampaign(updated)
+      }
+      onCampaignsChange?.()
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update campaign details.")
+    } finally {
+      setIsUpdating(false)
+      setEditingCampaign(null)
+    }
+  }
+
+  // Delete flow triggers
+  const handleDeleteOpen = (id: string) => {
+    const campaign = campaigns.find((c) => c.id === id)
+    if (campaign) {
+      setCampaignToDelete(campaign)
+      setIsDeleteOpen(true)
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!campaignToDelete) return
+    setIsDeleting(true)
+    
+    // Optimistic UI update
+    const previousCampaigns = [...campaigns]
+    setCampaigns((prev) => prev.filter((c) => c.id !== campaignToDelete.id))
+    
+    try {
+      await campaignService.deleteCampaign(campaignToDelete.id)
+      toast.success("Campaign deleted successfully.")
+      setIsDeleteOpen(false)
+      setIsDrawerOpen(false)
+      onCampaignsChange?.()
+    } catch (err: any) {
+      // Rollback
+      setCampaigns(previousCampaigns)
+      toast.error(err?.message || "Failed to delete campaign.")
+    } finally {
+      setIsDeleting(false)
+      setCampaignToDelete(null)
+    }
+  }
+
+  // Fetch campaign details and open drawer
+  const handleOpenDetails = async (campaign: Campaign) => {
+    try {
+      const details = await campaignService.getCampaign(campaign.id)
+      setSelectedCampaign(details)
+      setIsDrawerOpen(true)
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to load campaign details.")
+    }
+  }
+
+  // Click handler for column headers to trigger sorting
+  const handleSort = (column: "budget" | "spend" | "roas" | "createdAt") => {
+    if (sortColumn === column) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+    } else {
+      setSortColumn(column)
+      setSortDirection("desc")
+    }
+  }
+
+  // Filter, Search, and Sort computing
   const processedCampaigns = React.useMemo(() => {
     let result = [...campaigns]
 
-    // 1. Search filter
-    if (searchTerm) {
-      const query = searchTerm.toLowerCase()
+    // 1. Live search filter
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase()
       result = result.filter((c) => c.name.toLowerCase().includes(query))
     }
 
@@ -69,15 +205,22 @@ export function CampaignTable() {
       result = result.filter((c) => c.status === statusFilter)
     }
 
-    // 3. Sort by Created Date
+    // 3. Multi-field Sorting
     result.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime()
-      const dateB = new Date(b.createdAt).getTime()
-      return sortByDate === "newest" ? dateB - dateA : dateA - dateB
+      let valA: any = a[sortColumn]
+      let valB: any = b[sortColumn]
+
+      if (sortColumn === "createdAt") {
+        const dateA = new Date(valA).getTime()
+        const dateB = new Date(valB).getTime()
+        return sortDirection === "desc" ? dateB - dateA : dateA - dateB
+      }
+
+      return sortDirection === "desc" ? valB - valA : valA - valB
     })
 
     return result
-  }, [campaigns, searchTerm, statusFilter, sortByDate])
+  }, [campaigns, debouncedSearch, statusFilter, sortColumn, sortDirection])
 
   // Pagination logic
   const totalPages = Math.ceil(processedCampaigns.length / itemsPerPage)
@@ -89,10 +232,17 @@ export function CampaignTable() {
   // Reset page when filters change
   React.useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, sortByDate])
+  }, [debouncedSearch, statusFilter, sortColumn, sortDirection])
 
   if (loading) {
     return <CampaignSkeleton />
+  }
+
+  // Compute helpers to pass date-sorting to CampaignFilters
+  const sortByDate = sortColumn === "createdAt" && sortDirection === "asc" ? "oldest" : "newest"
+  const handleSortByDateChange = (newSort: "newest" | "oldest") => {
+    setSortColumn("createdAt")
+    setSortDirection(newSort === "newest" ? "desc" : "asc")
   }
 
   return (
@@ -106,7 +256,7 @@ export function CampaignTable() {
             statusFilter={statusFilter}
             onStatusChange={setStatusFilter}
             sortByDate={sortByDate}
-            onSortChange={setSortByDate}
+            onSortChange={handleSortByDateChange}
           />
         </div>
       </div>
@@ -121,7 +271,7 @@ export function CampaignTable() {
                 <span>Campaign performance overview</span>
               </CardTitle>
               <CardDescription className="text-xs text-zinc-500">
-                Track optimization values, conversion rates, and spend efficiency.
+                Track optimization values, conversion rates, and spend efficiency. Click table headers to sort.
               </CardDescription>
             </div>
           </div>
@@ -153,12 +303,44 @@ export function CampaignTable() {
                   <tr className="border-b border-zinc-900/65 text-zinc-500 font-medium">
                     <th className="pb-3 pr-4 font-semibold">Campaign Name</th>
                     <th className="pb-3 px-4 font-semibold">Status</th>
-                    <th className="pb-3 px-4 text-right font-semibold">Budget</th>
-                    <th className="pb-3 px-4 text-right font-semibold">Spend</th>
+                    <th 
+                      onClick={() => handleSort("budget")} 
+                      className="pb-3 px-4 text-right font-semibold cursor-pointer hover:text-zinc-300 select-none group/hdr"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Budget</span>
+                        <ArrowUpDownIcon className="size-3 text-zinc-600 group-hover/hdr:text-zinc-400 transition-colors" />
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => handleSort("spend")} 
+                      className="pb-3 px-4 text-right font-semibold cursor-pointer hover:text-zinc-300 select-none group/hdr"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Spend</span>
+                        <ArrowUpDownIcon className="size-3 text-zinc-600 group-hover/hdr:text-zinc-400 transition-colors" />
+                      </div>
+                    </th>
                     <th className="pb-3 px-4 text-right font-semibold">CTR</th>
                     <th className="pb-3 px-4 text-right font-semibold">CPC</th>
-                    <th className="pb-3 px-4 text-right font-semibold">ROAS</th>
-                    <th className="pb-3 px-4 text-right font-semibold">Created Date</th>
+                    <th 
+                      onClick={() => handleSort("roas")} 
+                      className="pb-3 px-4 text-right font-semibold cursor-pointer hover:text-zinc-300 select-none group/hdr"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>ROAS</span>
+                        <ArrowUpDownIcon className="size-3 text-zinc-600 group-hover/hdr:text-zinc-400 transition-colors" />
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => handleSort("createdAt")} 
+                      className="pb-3 px-4 text-right font-semibold cursor-pointer hover:text-zinc-300 select-none group/hdr"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Created Date</span>
+                        <ArrowUpDownIcon className="size-3 text-zinc-600 group-hover/hdr:text-zinc-400 transition-colors" />
+                      </div>
+                    </th>
                     <th className="pb-3 pl-4 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -174,7 +356,10 @@ export function CampaignTable() {
                           transition={{ duration: 0.2 }}
                           className="group border-b border-zinc-900/30 hover:bg-zinc-900/10 transition-colors"
                         >
-                          <td className="py-4 pr-4 font-bold text-zinc-200 group-hover:text-white transition-colors">
+                          <td 
+                            onClick={() => handleOpenDetails(camp)}
+                            className="py-4 pr-4 font-bold text-zinc-200 group-hover:text-purple-300 transition-colors cursor-pointer"
+                          >
                             {camp.name}
                           </td>
                           <td className="py-4 px-4">
@@ -202,7 +387,8 @@ export function CampaignTable() {
                             <CampaignActions
                               campaign={camp}
                               onStatusChange={handleStatusChange}
-                              onDelete={handleDelete}
+                              onDelete={handleDeleteOpen}
+                              onEdit={handleEditOpen}
                             />
                           </td>
                         </motion.tr>
@@ -236,6 +422,43 @@ export function CampaignTable() {
           </>
         )}
       </Card>
+
+      {/* Campaign Details Drawer */}
+      <CampaignDetailsDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        campaign={selectedCampaign}
+        onEdit={handleEditOpen}
+        onStatusChange={handleStatusChange}
+        onDelete={handleDeleteOpen}
+      />
+
+      {/* Delete Campaign Confirmation Dialog */}
+      <DeleteCampaignDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        campaignName={campaignToDelete?.name || ""}
+        isLoading={isDeleting}
+      />
+
+      {/* Edit Details Modal */}
+      <CampaignModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        title="Edit Campaign Details"
+      >
+        <CampaignForm
+          initialValues={editingCampaign ? {
+            name: editingCampaign.name,
+            budget: editingCampaign.budget,
+            status: editingCampaign.status,
+          } : undefined}
+          onSubmit={handleEditSubmit}
+          onCancel={() => setIsEditOpen(false)}
+          isLoading={isUpdating}
+        />
+      </CampaignModal>
     </div>
   )
 }
