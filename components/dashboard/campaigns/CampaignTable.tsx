@@ -118,6 +118,11 @@ export function CampaignTable({ refreshTrigger = 0, onCampaignsChange }: Campaig
         name: values.name,
         budget: values.budget,
         status: values.status as any,
+        objective: values.objective as any,
+        platform: values.platform as any,
+        currency: values.currency as any,
+        startDate: values.startDate,
+        endDate: values.endDate,
       })
       toast.success("Campaign updated successfully.")
       setIsEditOpen(false)
@@ -453,6 +458,11 @@ export function CampaignTable({ refreshTrigger = 0, onCampaignsChange }: Campaig
             name: editingCampaign.name,
             budget: editingCampaign.budget,
             status: editingCampaign.status,
+            objective: editingCampaign.objective as any,
+            platform: editingCampaign.platform as any,
+            currency: editingCampaign.currency as any,
+            startDate: editingCampaign.startDate,
+            endDate: editingCampaign.endDate,
           } : undefined}
           onSubmit={handleEditSubmit}
           onCancel={() => setIsEditOpen(false)}

@@ -41,12 +41,16 @@ export default function CampaignsPage() {
   const handleCreateSubmit = async (values: CampaignFormValues) => {
     setIsSubmitting(true)
     try {
-      // Map form objective, platform, budget, status, name to service
+      // Map form fields to service
       await campaignService.createCampaign({
         name: values.name,
         objective: values.objective as any,
         budget: values.budget,
         status: values.status as any,
+        currency: values.currency as any,
+        platform: values.platform as any,
+        startDate: values.startDate,
+        endDate: values.endDate,
       })
       toast.success("Campaign created successfully!")
       setIsCreateOpen(false)

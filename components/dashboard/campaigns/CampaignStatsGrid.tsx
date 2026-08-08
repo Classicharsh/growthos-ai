@@ -17,6 +17,25 @@ interface CampaignStatsGridProps {
 }
 
 export function CampaignStatsGrid({ stats, loading = false }: CampaignStatsGridProps) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {Array.from({ length: 4 }).map((_, idx) => (
+          <div key={idx} className="h-28 rounded-2xl border border-zinc-900 bg-zinc-950/20 animate-pulse flex flex-col justify-between p-5">
+            <div className="flex items-center justify-between">
+              <div className="h-3.5 w-24 bg-zinc-900 rounded-md" />
+              <div className="size-9 bg-zinc-900 rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-7 w-28 bg-zinc-900 rounded-md" />
+              <div className="h-3 w-16 bg-zinc-900 rounded-md" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const currentStats = stats || {
     totalCampaigns: 0,
     activeCampaigns: 0,

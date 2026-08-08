@@ -1,6 +1,10 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { Campaign } from '../types/campaign.types';
 
-let mockCampaigns: Campaign[] = [
+const DATA_FILE = path.join(__dirname, '../../data/campaigns.json');
+
+const initialMockCampaigns: Campaign[] = [
   {
     id: "camp-01",
     name: "US - Lookalike Purchases 2%",
@@ -113,6 +117,37 @@ let mockCampaigns: Campaign[] = [
   }
 ];
 
+function readCampaignsFromFile(): Campaign[] {
+  try {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify(initialMockCampaigns, null, 2), 'utf-8');
+      return initialMockCampaigns;
+    }
+    const content = fs.readFileSync(DATA_FILE, 'utf-8');
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Error reading campaigns file:', error);
+    return initialMockCampaigns;
+  }
+}
+
+function writeCampaignsToFile(campaigns: Campaign[]): void {
+  try {
+    const dir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(campaigns, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing campaigns file:', error);
+  }
+}
+
+
 export class CampaignService {
   /**
    * Fetches all campaigns.
@@ -120,7 +155,7 @@ export class CampaignService {
   public static async getCampaigns(): Promise<Campaign[]> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(mockCampaigns);
+        resolve(readCampaignsFromFile());
       }, 50);
     });
   }
@@ -131,7 +166,8 @@ export class CampaignService {
   public static async getCampaignById(id: string): Promise<Campaign | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const campaign = mockCampaigns.find((c) => c.id === id);
+        const campaigns = readCampaignsFromFile();
+        const campaign = campaigns.find((c) => c.id === id);
         resolve(campaign || null);
       }, 30);
     });
@@ -143,6 +179,7 @@ export class CampaignService {
   public static async createCampaign(campaignData: Omit<Campaign, 'id' | 'spend' | 'ctr' | 'cpc' | 'roas' | 'createdAt'>): Promise<Campaign> {
     return new Promise((resolve) => {
       setTimeout(() => {
+        const campaigns = readCampaignsFromFile();
         const newCampaign: Campaign = {
           ...campaignData,
           id: `camp-${Math.random().toString(36).substr(2, 9)}`,
@@ -152,7 +189,8 @@ export class CampaignService {
           roas: 0,
           createdAt: new Date().toISOString().split('T')[0],
         };
-        mockCampaigns.push(newCampaign);
+        campaigns.push(newCampaign);
+        writeCampaignsToFile(campaigns);
         resolve(newCampaign);
       }, 50);
     });
@@ -164,17 +202,19 @@ export class CampaignService {
   public static async updateCampaign(id: string, updateData: Partial<Campaign>): Promise<Campaign | null> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const index = mockCampaigns.findIndex((c) => c.id === id);
+        const campaigns = readCampaignsFromFile();
+        const index = campaigns.findIndex((c) => c.id === id);
         if (index === -1) {
           resolve(null);
           return;
         }
-        mockCampaigns[index] = {
-          ...mockCampaigns[index],
+        campaigns[index] = {
+          ...campaigns[index],
           ...updateData,
           id, // protect id integrity
         };
-        resolve(mockCampaigns[index]);
+        writeCampaignsToFile(campaigns);
+        resolve(campaigns[index]);
       }, 50);
     });
   }
@@ -185,12 +225,14 @@ export class CampaignService {
   public static async deleteCampaign(id: string): Promise<boolean> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const index = mockCampaigns.findIndex((c) => c.id === id);
+        const campaigns = readCampaignsFromFile();
+        const index = campaigns.findIndex((c) => c.id === id);
         if (index === -1) {
           resolve(false);
           return;
         }
-        mockCampaigns.splice(index, 1);
+        campaigns.splice(index, 1);
+        writeCampaignsToFile(campaigns);
         resolve(true);
       }, 50);
     });
@@ -207,11 +249,12 @@ export class CampaignService {
   }> {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const totalCampaigns = mockCampaigns.length;
-        const activeCampaigns = mockCampaigns.filter((c) => c.status === 'Active').length;
-        const totalSpend = mockCampaigns.reduce((sum, c) => sum + c.spend, 0);
+        const campaigns = readCampaignsFromFile();
+        const totalCampaigns = campaigns.length;
+        const activeCampaigns = campaigns.filter((c) => c.status === 'Active').length;
+        const totalSpend = campaigns.reduce((sum, c) => sum + c.spend, 0);
         
-        const campaignsWithRoas = mockCampaigns.filter((c) => c.roas > 0);
+        const campaignsWithRoas = campaigns.filter((c) => c.roas > 0);
         const averageRoas = campaignsWithRoas.length > 0
           ? parseFloat((campaignsWithRoas.reduce((sum, c) => sum + c.roas, 0) / campaignsWithRoas.length).toFixed(2))
           : 0;
