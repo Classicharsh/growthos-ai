@@ -47,29 +47,34 @@ Designed for marketers, product managers, and developers who need a lightweight 
 
 ```mermaid
 flowchart TD
+    User["User"]
+
     subgraph Frontend
-        UI[Next.js + React UI]
+        UI["Next.js + React UI"]
     end
 
     subgraph Backend
-        API[Express API (Render)]
-        MetaCAPI[Meta CAPI Service]
-        Dashboard[Dashboard Service]
+        API["Express API - Render"]
+        MetaCAPI["Meta Conversion API"]
+        Dashboard["Dashboard Service"]
+        Campaign["Campaign Service"]
     end
 
-    subgraph Data
-        Firestore[Firebase Firestore]
-        Auth[Firebase Auth (client‑side)]
+    subgraph Firebase
+        Auth["Firebase Authentication"]
+        Firestore["Cloud Firestore"]
     end
 
-    UI -->|HTTPS| API
-    API -->|Calls| MetaCAPI
-    API -->|Calls| Dashboard
-    UI -->|Direct reads/writes| Firestore
-    UI -->|Auth via| Auth
-    Dashboard -->|Reads| Firestore
-    MetaCAPI -->|Sends events to| Meta[Meta Conversions API]
-    API -->|Reads/Writes| Firestore
+    User --> UI
+    UI -->|"HTTPS"| API
+
+    API --> MetaCAPI
+    API --> Dashboard
+    API --> Campaign
+
+    UI --> Auth
+    Campaign --> Firestore
+    Dashboard --> Firestore
 ```
 
 *Both the Next.js frontend and the Express backend interact with Firestore using the Firebase client SDK. Authentication is performed on the client; the backend does not validate Firebase tokens.*
