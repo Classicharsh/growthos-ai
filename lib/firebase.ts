@@ -47,8 +47,11 @@ if (process.env.NODE_ENV === "development") {
 // SINGLETON INITIALIZATION
 // Prevents duplicate app initialization across Next.js App Router SSR & Fast Refresh
 // ─────────────────────────────────────────────────────────────────────────────
-const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
-const auth: Auth = getAuth(app)
+import { getFirestore, type Firestore } from "firebase/firestore";
+const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+
 
 // Google Authentication Provider
 const googleProvider = new GoogleAuthProvider()
@@ -56,4 +59,4 @@ googleProvider.setCustomParameters({
   prompt: "select_account",
 })
 
-export { app, auth, googleProvider, setPersistence, browserLocalPersistence, browserSessionPersistence }
+export { app, auth, googleProvider, setPersistence, browserLocalPersistence, browserSessionPersistence, db };
